@@ -203,6 +203,22 @@ def payManager():
         cuota=parseTrama(str(entry_pago.get()[8:10]))
         fecha=parseTrama(str(entry_pago.get()[10:18]))
         monto=parseTrama(str(entry_pago.get()[19:26]))
+
+        # parsear monto a decimales
+        montoDecimas=str(str(monto)[::-1])[0:2]
+        montosinDecimas=str(str(str(monto)[::-1])[2:len(monto)])[::-1]
+        montoFinal=float(str(montosinDecimas)+'.'+str(montoDecimas))
+
+        # parsear fecha
+        ano=str(fecha)[0:4]
+        dia=str(fecha)[4:6]
+        mes=str(fecha)[6:8]
+        now = datetime.datetime(int(ano), int(mes), int(dia))
+        now.strftime("%Y-%m-%d")
+
+        response = enviar_mensaje('P'+','+str(codCli)+','+str(cuota)+','+str(now)+','+str(montoFinal))
+        print(response)
+        
     else:
         messagebox.showwarning("Alerta!", "Debes Ingresar solo digitos numericos!")
         entry_pago.delete(0,tk.END)
