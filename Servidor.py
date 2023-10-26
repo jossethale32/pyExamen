@@ -76,14 +76,15 @@ def getPagos(id):
         print("⚠️No se pudo actualizar la lista de Pagos")
 
 def setPagos(id,cuota,fecha,monto):
-    now = datetime.now()
+    now = datetime.now().date()
     now.strftime("%Y-%m-%d")
+    now = str(now)
     state=""
 
     # Consultar estado de pago segun cliente y cuota y fecha
     try:
         cursor = mydb.cursor(buffered=True)
-        cursor.execute("SELECT ESTADO FROM pagos where `ID CLIENTE` = "+id+" AND CUOTA = "+cuota+" AND `FECHA PAGO` = "+fecha)
+        cursor.execute("SELECT ESTADO FROM pagos where `ID CLIENTE` = "+id+" AND CUOTA = "+str(cuota))
         state = cursor.fetchone()[0]
         # cursor.close()
     except mysql.connector.Error as e:
@@ -104,7 +105,7 @@ def setPagos(id,cuota,fecha,monto):
 
         # HACER CALULOS PARA ACTUALIZAR PAGO
         monto = float(monto) #Monto a pagar
-        montof = float(montof[0]) #Monto faltante por pagar
+        montof = float(montof) #Monto faltante por pagar
         diferencia = montof - monto
         if diferencia < 0:
             # Estoy pagando de mas no puedo!
@@ -114,7 +115,10 @@ def setPagos(id,cuota,fecha,monto):
             cursor = mydb.cursor()
             try:
                 refer=str("RFM-")+str(random.randint(1, 857567567))
-                cursor.execute("UPDATE pagos set MONTO = "+str(diferencia)+",`PAGOFECHAREALIZACION` = "+now+",ESTADO='P',REFERENCIA="+str(refer)+" where `ID CLIENTE` = "+id+" AND CUOTA = "+cuota+" AND `FECHA PAGO` like "+fecha)
+                sql="UPDATE pagos set MONTO = %s,`PAGOFECHAREALIZACION` = %s, ESTADO='P', REFERENCIA = %s where `ID CLIENTE` = %s AND CUOTA = %s AND `FECHA PAGO` like %s"
+                
+                val=(str(diferencia),now,str(refer),id,cuota,fecha)
+                cursor.execute(sql, val)
                 mydb.commit()
                 return "00"
             except mysql.connector.Error as e:
@@ -137,7 +141,10 @@ def setPagos(id,cuota,fecha,monto):
             # Aun queda debiendo solo reducir monto
             cursor = mydb.cursor()
             try:
-                cursor.execute("UPDATE pagos set MONTO = "+str(diferencia)+",`PAGOFECHAREALIZACION` = "+now+",ESTADO='F' where `ID CLIENTE` = "+id+" AND CUOTA = "+cuota+" AND `FECHA PAGO` like "+fecha)
+                sql="UPDATE pagos set MONTO = %s,`PAGOFECHAREALIZACION` = %s, ESTADO='F' where `ID CLIENTE` = %s AND CUOTA = %s AND `FECHA PAGO` like %s"
+                
+                val=(str(diferencia),now,id,cuota,fecha)
+                cursor.execute(sql, val)
                 mydb.commit()
                 return "00"
             except mysql.connector.Error as e:
@@ -173,7 +180,7 @@ def setPagos(id,cuota,fecha,monto):
         
         # HACER CALULOS PARA ACTUALIZAR PAGO
         monto = float(monto) #Monto a pagar
-        montof = float(montof[0]) #Monto faltante por pagar
+        montof = float(montof) #Monto faltante por pagar
         diferencia = montof - monto
         if diferencia < 0:
             # Estoy pagando de mas no puedo!
@@ -182,7 +189,10 @@ def setPagos(id,cuota,fecha,monto):
             # Puede pagar porque esta dando lo que le falta
             cursor = mydb.cursor()
             try:
-                cursor.execute("UPDATE pagos set MONTO = "+str(diferencia)+",`PAGOFECHAREALIZACION` = "+now+",ESTADO='P',REFERENCIA="+str("RFM-")+str(random.randint(1, 857567567))+" where `ID CLIENTE` = "+id+" AND CUOTA = "+cuota+" AND `FECHA PAGO` like "+fecha)
+                sql="UPDATE pagos set MONTO = %s,`PAGOFECHAREALIZACION` = %s, ESTADO='P', REFERENCIA = %s where `ID CLIENTE` = %s AND CUOTA = %s AND `FECHA PAGO` like %s"
+                
+                val=(str(diferencia),now,str(refer),id,cuota,fecha)
+                cursor.execute(sql, val)
                 mydb.commit()
                 return "00"
             except mysql.connector.Error as e:
@@ -205,7 +215,9 @@ def setPagos(id,cuota,fecha,monto):
             # Aun queda debiendo solo reducir monto
             cursor = mydb.cursor()
             try:
-                cursor.execute("UPDATE pagos set MONTO = "+str(diferencia)+",`PAGOFECHAREALIZACION` = "+now+",ESTADO='F' where `ID CLIENTE` = "+id+" AND CUOTA = "+cuota+" AND `FECHA PAGO` like "+fecha)
+                sql="UPDATE pagos set MONTO = %s,`PAGOFECHAREALIZACION` = %s, ESTADO='F' where `ID CLIENTE` = %s AND CUOTA = %s AND `FECHA PAGO` like %s"
+                
+                val=(str(diferencia),now,id,cuota,fecha)
                 mydb.commit()
                 return "00"
             except mysql.connector.Error as e:

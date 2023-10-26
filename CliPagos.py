@@ -2,7 +2,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import socket
 import requests
-from datetime import datetime
+from datetime import datetime as tt
+import datetime
 
 # Función para enviar mensajes al servidor
 def enviar_mensaje(mensaje):
@@ -141,6 +142,7 @@ def subconsultar():
             tabla.delete(*tabla.get_children())  # Limpia la tabla antes de agregar nuevos datos
             for pay in pagos:
                 if "datetime" in pay:
+                    # now = datetime.strptime(pay, "%d/%m/%Y %H:%M:%S").date().strftime('%Y-%d-%m')
                     tabla.insert('', 'end', values=pay.strftime("%Y-%m-%d"))
                 else:
                     tabla.insert('', 'end', values=pay)
@@ -214,7 +216,7 @@ def payManager():
         dia=str(fecha)[4:6]
         mes=str(fecha)[6:8]
         toStrindDate=str(mes)+'/'+str(dia)+'/'+str(ano)
-        now = datetime.strptime(toStrindDate+" 00:00:00", "%d/%m/%Y %H:%M:%S").date().strftime('%Y-%d-%m')
+        now = tt.strptime(toStrindDate+" 00:00:00", "%d/%m/%Y %H:%M:%S").date().strftime('%Y-%d-%m')
 
         # Recibir respuesta del server 
         response = enviar_mensaje('P'+','+str(codCli)+','+str(cuota)+','+str(now)+','+str(montoFinal))
@@ -227,7 +229,7 @@ def payManager():
         elif '01' in response:
             messagebox.showerror("Error!", "Transaccion Fallida!")
         else:
-            messagebox.showerror("Error Interno","0x001")
+            messagebox.showerror("Error Interno","0x001 "+str(response))
         
     else:
         messagebox.showwarning("Alerta!", "Debes Ingresar solo digitos numericos!")
