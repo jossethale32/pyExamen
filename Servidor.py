@@ -102,71 +102,60 @@ def setPagos(id,cuota,fecha,monto):
         except mysql.connector.Error as e:
             return "1-Algo Fallo del lado del server! "+str(e)
 
-        if montof != None:
-            # HACER CALULOS PARA ACTUALIZAR PAGO
-            monto = float(monto) #Monto a pagar
-            montof = float(montof) #Monto faltante por pagar
-            diferencia = montof - monto
-            # si queda valores negativos es porque esta pagando de mas
-            if diferencia < 0:
-                # Estoy pagando de mas no puedo!
-                return "No se puede pagar de mas!"
-            # si queda 0 esta cabal
-            elif diferencia == 0:
-                # Puede pagar porque esta dando lo que le falta
-                cursor.reset()
-                cursor = mydb.cursor()
+        # HACER CALULOS PARA ACTUALIZAR PAGO
+        monto = float(monto) #Monto a pagar
+        montof = float(montof[0]) #Monto faltante por pagar
+        diferencia = montof - monto
+        if diferencia < 0:
+            # Estoy pagando de mas no puedo!
+            return "No se puede pagar de mas!"
+        elif diferencia == 0:
+            # Puede pagar porque esta dando lo que le falta
+            cursor = mydb.cursor()
+            try:
+                refer=str("RFM-")+str(random.randint(1, 857567567))
+                cursor.execute("UPDATE pagos set MONTO = "+str(diferencia)+",`PAGOFECHAREALIZACION` = "+now+",ESTADO='P',REFERENCIA="+str(refer)+" where `ID CLIENTE` = "+id+" AND CUOTA = "+cuota+" AND `FECHA PAGO` like "+fecha)
+                mydb.commit()
+                return "00"
+            except mysql.connector.Error as e:
                 try:
-                    refer=str("RFM-")+str(random.randint(1, 857567567))
-                    sql="UPDATE pagos set MONTO = %s ,`PAGOFECHAREALIZACION` = %s ,ESTADO='P',REFERENCIA = %s where `ID CLIENTE` = %s AND CUOTA = %s AND `FECHA PAGO` like %s"
-                    val = (diferencia, now, str(refer),id,cuota,fecha)
-                    cursor.execute(sql, val)
-                    mydb.commit()
-                    return "00"
-                except mysql.connector.Error as e:
-                    try:
-                        print ("MySQL Error [%d]: %s" % (e.args[0], e.args[1]))
-                        return "01"
-                    except IndexError:
-                        print ("MySQL Error: %s" % str(e))
-                        return "01"
-                except TypeError as e:
-                        print("Type error "+str(e))
-                        return "01"
-                except ValueError as e:
-                    print("Value error "+str(e))
+                    print ("MySQL Error [%d]: %s" % (e.args[0], e.args[1]))
                     return "01"
-                except Exception as e:
-                    print("Exeption error "+str(e))
+                except IndexError:
+                    print ("MySQL Error: %s" % str(e))
                     return "01"
-            # si queda sobrando debe aun dinero
-            elif diferencia > 0:
-                # Aun queda debiendo solo reducir monto
-                cursor.reset()
-                cursor = mydb.cursor()
-                try:
-                    cursor.execute("UPDATE pagos set MONTO = "+str(diferencia)+",`PAGOFECHAREALIZACION` = "+now+",ESTADO='F' where `ID CLIENTE` = "+id+" AND CUOTA = "+cuota+" AND `FECHA PAGO` like "+fecha)
-                    mydb.commit()
-                    return "00"
-                except mysql.connector.Error as e:
-                    try:
-                        print ("MySQL Error [%d]: %s" % (e.args[0], e.args[1]))
-                        return "01"
-                    except IndexError:
-                        print ("MySQL Error: %s" % str(e))
-                        return "01"
-                except TypeError as e:
-                        print(e)
-                        return "01"
-                except ValueError as e:
+            except TypeError as e:
                     print(e)
                     return "01"
-                except Exception as e:
+            except ValueError as e:
+                print(e)
+                return "01"
+            except Exception as e:
+                print(e)
+                return "01"
+        elif diferencia > 0:
+            # Aun queda debiendo solo reducir monto
+            cursor = mydb.cursor()
+            try:
+                cursor.execute("UPDATE pagos set MONTO = "+str(diferencia)+",`PAGOFECHAREALIZACION` = "+now+",ESTADO='F' where `ID CLIENTE` = "+id+" AND CUOTA = "+cuota+" AND `FECHA PAGO` like "+fecha)
+                mydb.commit()
+                return "00"
+            except mysql.connector.Error as e:
+                try:
+                    print ("MySQL Error [%d]: %s" % (e.args[0], e.args[1]))
+                    return "01"
+                except IndexError:
+                    print ("MySQL Error: %s" % str(e))
+                    return "01"
+            except TypeError as e:
                     print(e)
                     return "01"
-        else:
-            print("No obtubo datos.")
-    # Si esta pagada ya la cuota
+            except ValueError as e:
+                print(e)
+                return "01"
+            except Exception as e:
+                print(e)
+                return "01"
     elif state[0] == "P":
         # NO SE PUEDE REALIZAR PAGO PORQUE ESTA PAGADO
         return "Cuota ya se encuentra Pagada.."
@@ -182,67 +171,60 @@ def setPagos(id,cuota,fecha,monto):
         except mysql.connector.Error as e:
             return "1-Algo Fallo del lado del server! "+str(e)
         
-        if montof != None:
-            # HACER CALULOS PARA ACTUALIZAR PAGO
-            monto = float(monto) #Monto a pagar
-            montof = float(montof) #Monto faltante por pagar
-            diferencia = montof - monto
-            # si queda valores negativos es porque esta pagando de mas
-            if diferencia < 0:
-                # Estoy pagando de mas no puedo!
-                return "No se puede pagar mas!"
-            # si queda 0 esta cabal
-            elif diferencia == 0:
-                # Puede pagar porque esta dando lo que le falta
-                cursor.reset()
-                cursor = mydb.cursor()
+        # HACER CALULOS PARA ACTUALIZAR PAGO
+        monto = float(monto) #Monto a pagar
+        montof = float(montof[0]) #Monto faltante por pagar
+        diferencia = montof - monto
+        if diferencia < 0:
+            # Estoy pagando de mas no puedo!
+            return "No se puede pagar mas!"
+        elif diferencia == 0:
+            # Puede pagar porque esta dando lo que le falta
+            cursor = mydb.cursor()
+            try:
+                cursor.execute("UPDATE pagos set MONTO = "+str(diferencia)+",`PAGOFECHAREALIZACION` = "+now+",ESTADO='P',REFERENCIA="+str("RFM-")+str(random.randint(1, 857567567))+" where `ID CLIENTE` = "+id+" AND CUOTA = "+cuota+" AND `FECHA PAGO` like "+fecha)
+                mydb.commit()
+                return "00"
+            except mysql.connector.Error as e:
                 try:
-                    cursor.execute("UPDATE pagos set MONTO = "+str(diferencia)+",`PAGOFECHAREALIZACION` = "+now+",ESTADO='P',REFERENCIA="+str("RFM-")+str(random.randint(1, 857567567))+" where `ID CLIENTE` = "+id+" AND CUOTA = "+cuota+" AND `FECHA PAGO` like "+fecha)
-                    mydb.commit()
-                    return "00"
-                except mysql.connector.Error as e:
-                    try:
-                        print ("MySQL Error [%d]: %s" % (e.args[0], e.args[1]))
-                        return "01"
-                    except IndexError:
-                        print ("MySQL Error: %s" % str(e))
-                        return "01"
-                except TypeError as e:
-                        print(e)
-                        return "01"
-                except ValueError as e:
+                    print ("MySQL Error [%d]: %s" % (e.args[0], e.args[1]))
+                    return "01"
+                except IndexError:
+                    print ("MySQL Error: %s" % str(e))
+                    return "01"
+            except TypeError as e:
                     print(e)
                     return "01"
-                except Exception as e:
-                    print(e)
-                    return "01"
-            # si queda sobrando debe aun dinero
-            elif diferencia > 0:
-                # Aun queda debiendo solo reducir monto
-                cursor.reset()
-                cursor = mydb.cursor()
+            except ValueError as e:
+                print(e)
+                return "01"
+            except Exception as e:
+                print(e)
+                return "01"
+        elif diferencia > 0:
+            # Aun queda debiendo solo reducir monto
+            cursor = mydb.cursor()
+            try:
+                cursor.execute("UPDATE pagos set MONTO = "+str(diferencia)+",`PAGOFECHAREALIZACION` = "+now+",ESTADO='F' where `ID CLIENTE` = "+id+" AND CUOTA = "+cuota+" AND `FECHA PAGO` like "+fecha)
+                mydb.commit()
+                return "00"
+            except mysql.connector.Error as e:
                 try:
-                    cursor.execute("UPDATE pagos set MONTO = "+str(diferencia)+",`PAGOFECHAREALIZACION` = "+now+",ESTADO='F' where `ID CLIENTE` = "+id+" AND CUOTA = "+cuota+" AND `FECHA PAGO` like "+fecha)
-                    mydb.commit()
-                    return "00"
-                except mysql.connector.Error as e:
-                    try:
-                        print ("MySQL Error [%d]: %s" % (e.args[0], e.args[1]))
-                        return "01"
-                    except IndexError:
-                        print ("MySQL Error: %s" % str(e))
-                        return "01"
-                except TypeError as e:
-                        print(e)
-                        return "01"
-                except ValueError as e:
+                    print ("MySQL Error [%d]: %s" % (e.args[0], e.args[1]))
+                    return "01"
+                except IndexError:
+                    print ("MySQL Error: %s" % str(e))
+                    return "01"
+            except TypeError as e:
                     print(e)
                     return "01"
-                except Exception as e:
-                    print(e)
-                    return "01"
-        else:
-            print("No obtubo datos.")
+            except ValueError as e:
+                print(e)
+                return "01"
+            except Exception as e:
+                print(e)
+                return "01"
+
 # Función para iniciar el servidor de sockets
 def start_server():
     print("Servidor Iniciado...\nEsperando Conexion...")
