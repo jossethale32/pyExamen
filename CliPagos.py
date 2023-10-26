@@ -156,21 +156,23 @@ def reversion():
 ### ZONA DE PAGO
 
 def pagar_cuotas():
-    # print("Pagar cuotas")
+    # Preparar ventanda para ingreso de trama de pago
     ventana_secundariaP.iconbitmap("ic_icon.ico")
     ventana_secundariaP.deiconify()
     ventana_secundariaP.title("Control de Pagos")
     ventana_secundariaP.config(width=1000, height=600)
     ventana_secundariaP.protocol("WM_DELETE_WINDOW", disable_event)
 
+    # centrar la ventana secundaria
     x = root.winfo_x()
     y = root.winfo_y()
     ventana_secundariaP.geometry("+%d+%d" %(x+200,y+200))
 
+    # contenido de la ventana
     lblPago = tk.Label(ventana_secundariaP, text="#Trama Pago: ")
     lblPago.grid(row=0, column=0, padx=10,pady=10)
 
-    entry_pago.grid(row=0, column=1, padx=25, pady=10)
+    entry_pago.grid(row=0, column=1, padx=15, pady=10)
     entry_pago.focus()
 
     btn_efectuar = tk.Button(ventana_secundariaP, text="  EFECTUAR PAGO  ", command=payManager)
@@ -179,8 +181,8 @@ def pagar_cuotas():
     boton_cerrar2 = tk.Button(ventana_secundariaP, text="  Cerrar ventana  ", command=ventana_secundariaP.withdraw)
     boton_cerrar2.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
 
+    # VALIDAR 26 caracteres de trama para pago
     entry_pago.bind('<KeyRelease>', updatePago)
-    return id
 
 def updatePago(event):
     # print(str(len(entry_idcli.get())))
@@ -191,7 +193,21 @@ def updatePago(event):
         entry_pago.focus()
 
 def payManager():
-    print("Pay Manager")
+    # print("Pay Manager")
+    codCli=""
+    cuota=""
+    fecha=""
+    monto=""
+    if entry_pago.get().isdigit():
+        codCli=parseTrama(str(entry_pago.get()[0:8]))
+        cuota=parseTrama(str(entry_pago.get()[8:10]))
+        fecha=parseTrama(str(entry_pago.get()[10:18]))
+        monto=parseTrama(str(entry_pago.get()[19:26]))
+    else:
+        messagebox.showwarning("Alerta!", "Debes Ingresar solo digitos numericos!")
+        entry_pago.delete(0,tk.END)
+        entry_pago.insert(0,"")
+        entry_pago.focus()
 
 ### ZONA DE PAGO
 ### ZONA DE PAGO
