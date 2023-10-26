@@ -2,14 +2,14 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import socket
 import requests
-import datetime
+from datetime import datetime
 
 # Función para enviar mensajes al servidor
 def enviar_mensaje(mensaje):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         client_socket.connect(('localhost', 12345))
-        client_socket.settimeout(5)
+        # client_socket.settimeout(5)
         client_socket.send(mensaje.encode('utf-8'))
         response = client_socket.recv(1024).decode('utf-8')
         client_socket.close()
@@ -213,11 +213,21 @@ def payManager():
         ano=str(fecha)[0:4]
         dia=str(fecha)[4:6]
         mes=str(fecha)[6:8]
-        now = datetime.datetime(int(ano), int(mes), int(dia))
-        now.strftime("%Y-%m-%d")
+        toStrindDate=str(mes)+'/'+str(dia)+'/'+str(ano)
+        now = datetime.strptime(toStrindDate+" 00:00:00", "%d/%m/%Y %H:%M:%S").date().strftime('%Y-%d-%m')
 
+        # Recibir respuesta del server 
         response = enviar_mensaje('P'+','+str(codCli)+','+str(cuota)+','+str(now)+','+str(montoFinal))
-        print(response)
+        if 'Algo Fallo' in response:
+            messagebox.showerror("Error!", "Algo Fallo con su pago\nVuelvalo a intentar nuevamente")
+        elif 'No se puede pagar de mas!' in response:
+            messagebox.showwarning("Alerta!", "No puedes pagar de más!")
+        elif '00' in response:
+            messagebox.showinfo("Exito!", "Pago Realizado con Exito!\nPuedes Consultar Cuotas Pendientes..")
+        elif '01' in response:
+            messagebox.showerror("Error!", "Transaccion Fallida!")
+        else:
+            messagebox.showerror("Error Interno","0x001")
         
     else:
         messagebox.showwarning("Alerta!", "Debes Ingresar solo digitos numericos!")
