@@ -4,13 +4,15 @@ import threading
 import requests
 import random
 from datetime import datetime
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 # Configura la conexión a la base de datos\
 mydb = mysql.connector
 try:
     mydb = mysql.connector.connect(
         host="localhost",
-        port=3308,
+        #port=3308,
         user="root",
         password="",
         database="pago_en_linea")
@@ -25,6 +27,7 @@ except Exception as g:
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.bind(('localhost', 12345))
 server_socket.listen(5)
+
 
 
 # Función para manejar las conexiones de los clientes
@@ -49,11 +52,10 @@ def handle_client(client_socket, addr):
                 client_socket.send(str(spagos).encode('utf-8'))
                 # print(str(id) + '\n'+str(cuota)+'\n'+str(fecha)+'\n'+str(monto))
             elif data.startswith('R'):
-                # print("Reversion")
-                _, id_cliente, _, _, _, = data.split(',')
-                _, _, cuota, _, _, = data.split(',')
-                revert = reversion3(id_cliente, cuota)
-                client_socket.send(str(revert).encode('utf-8'))
+                _, id, cuota,monto_anterior = data.split(',')
+                resultado_reversion = revertir_cuota(id, cuota,monto_anterior)
+                client_socket.send(str(resultado_reversion).encode('utf-8'))
+
             elif data.startswith('E'):
                 print("Salir")
                 break
@@ -78,47 +80,21 @@ def getPagos(id):
         print("⚠️No se pudo actualizar la lista de Pagos")
 
 
-import mysql.connector
-
-def reversion3(id_cliente, cuota):
+def revertir_cuota(id, cuota, monto_anterior):
     try:
-        # Establecer la conexión a la base de datos
-        mydb = mysql.connector.connect(
-            host="localhost",
-            port=3308,
-            user="root",
-            password="",
-            database="pago_en_linea"
-        )
-
+        # Conectar a la base de datos
         cursor = mydb.cursor()
 
-        # Verificar si existen registros con el ID cliente y cuota específicos
+        # Realizar la reversión en la base de datos y establecer MONTO como monto_anterior
         cursor.execute(
-            "SELECT * FROM pagos WHERE `ID CLIENTE` = %s AND `CUOTA` = %s AND `REFERENCIA` IS NOT NULL",
-            (id_cliente, cuota))
-        pagos = cursor.fetchall()
+            "UPDATE pagos SET `ESTADO` = 'A', `REFERENCIA` = NULL, `PAGOFECHAREALIZACION` = NULL, `MONTO` = %s WHERE `ID CLIENTE` = %s AND `CUOTA` = %s",
+            (monto_anterior, id, cuota))
+        mydb.commit()
 
-        if pagos:
-            # Realizar la reversión: Actualizar el estado, referencia y fecha de pago a NULL
-            cursor.execute(
-                "UPDATE pagos SET `ESTADO` = 'A', `REFERENCIA` = NULL, `PAGOFECHAREALIZACION` = NULL WHERE `ID CLIENTE` = %s AND `CUOTA` = %s AND `REFERENCIA` IS NOT NULL",
-                (id_cliente, cuota))
-            mydb.commit()
-            print("Reversión exitosa")
-            return "Reversión exitosa"
-        else:
-            print("No se puede revertir la cuota para este cliente")
-            return "No se puede revertir la cuota para este cliente"
-
+        return "00"  # Código para reversión exitosa
     except mysql.connector.Error as err:
-        print("DB-" + str(err))
-        print("Error en la base de datos")
-        return "Error en la base de datos"
-    finally:
-        # Cerrar el cursor y la conexión a la base de datos
-        cursor.close()
-        mydb.close()
+        print("Error en la base de datos: ", err)
+        return "01"  # Código para error en la base de datos
 
 def setPagos(id, cuota, fecha, monto):
     now = datetime.now().date()

@@ -261,72 +261,71 @@ def parseTramas(entrada):
             break
     return entrada[PosPrimerNum - 1:len(entrada)]
 
+
 def reversion3():
+    global now
     try:
-        now = tt.now().date()
-        now.strftime("%Y-%m-%d")
-        now = str(now)
+        now = datetime.datetime.now().strftime("%Y-%m-%d")
         # Obtener la fila seleccionada de la tabla
         selected_item = tabla3.selection()[0]  # Retorna el ID de la fila seleccionada
 
         # Obtener los valores de las columnas correspondientes en la fila seleccionada
-        id_cliente = tabla3.item(selected_item, 'values')[0]
+        id = tabla3.item(selected_item, 'values')[0]
         cuota = tabla3.item(selected_item, 'values')[1]
+        fecha_pago = tabla3.item(selected_item, 'values')[3]  # Obtener el valor de la columna FECHA PAGO
         estado = tabla3.item(selected_item, 'values')[5]  # Obtener el valor de la columna ESTADO
-        pagadofecha = tabla3.item(selected_item, 'values')[4]  # Obtener el valor de la columna REFERENCIAS
+        pagadofecha = tabla3.item(selected_item, 'values')[4]  # Obtener el valor de la columna PAGOFECHAREALIZACION
         referencia = tabla3.item(selected_item, 'values')[6]  # Obtener el valor de la columna REFERENCIAS
         monto_anterior = tabla3.item(selected_item, 'values')[7]  # Obtener el valor de la columna MONTO_ANTERIOR
 
-        # Conectar a la base de datos
-        mydb = mysql.connector.connect(
-            host="localhost",
-            port=3308,
-            user="root",
-            password="",
-            database="pago_en_linea"
-        )
+        # Condicional para verificar si la fecha de pago es igual a la fecha de realización del pago y si el estado es 'P' o 'F'
+        if pagadofecha == now and (estado == 'P' or estado == 'F'):
+            # Configurar la conexión al servidor
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_socket.connect(('localhost', 12345))
 
-        cursor = mydb.cursor()
+            try:
+                # Enviar solicitud de reversión al servidor
+                mensaje = f"R,{id},{cuota},{monto_anterior}"
+                client_socket.send(mensaje.encode('utf-8'))
 
-        # Verificar si la columna REFERENCIAS tiene datos y el ESTADO es 'P'
-        if referencia and estado == 'P':
-            # Realizar la reversión en la base de datos
-            if now ==str(pagadofecha):
-                cursor.execute(
-                    "UPDATE pagos SET `ESTADO` = 'A', `REFERENCIA` = NULL, `PAGOFECHAREALIZACION` = NULL, `MONTO` = %s WHERE `ID CLIENTE` = %s AND `CUOTA` = %s",
-                    (monto_anterior, id_cliente, cuota))
-                mydb.commit()
+                # Recibir respuesta del servidor
+                respuesta = client_socket.recv(1024).decode('utf-8')
+                print("Respuesta del servidor:", respuesta)
 
-                # Mostrar ventana de éxito
-                messagebox.showinfo("00 Exitoso", "Reversión exitosa")
+                # Procesar la respuesta del servidor
+                if respuesta == "00":
+                    # Mostrar ventana de éxito
+                    messagebox.showinfo("Éxito", "Reversión exitosa en el servidor.")
 
-                # Actualizar la tabla para mostrar el valor de MONTO_ANTERIOR en la columna MONTO
-                tabla3.item(selected_item, values=(id_cliente, cuota, monto_anterior, referencia, "", "A", "Revertido"))
+                    # Actualizar la tabla para mostrar el valor de MONTO_ANTERIOR en la columna MONTO
+                    tabla3.item(selected_item,
+                                values=(id, cuota, monto_anterior, fecha_pago, " ","A"))
 
-                ventana_tercearia.update_idletasks()
-            else:
-                messagebox.showwarning("Alerta", "Esta Cuota no puede ser Revertida! Fechas no Coinciden!")
+                    ventana_tercearia.update_idletasks()
+                elif respuesta == "01":
+                    messagebox.showerror("Error", "Error en el servidor durante la reversión.")
+                else:
+                    messagebox.showerror("Error", "Respuesta inesperada del servidor.")
+            except Exception as e:
+                messagebox.showerror("Error", f"Error de conexión con el servidor: {e}")
+            finally:
+                # Cerrar la conexión con el servidor
+                client_socket.close()
         else:
-            # Mostrar mensaje si la columna REFERENCIAS está vacía o el ESTADO no es 'P'
-            messagebox.showwarning("Alerta", "La columna REFERENCIAS está vacía o el ESTADO no es 'P'. No se puede revertir la cuota.")
-
-    except mysql.connector.Error as err:
-        # Mostrar ventana de error si hay un error en la base de datos
-        messagebox.showerror("Error en la base de datos", str(err))
-
-    finally:
-        cursor.close()
-        mydb.close()
-        subconsultar3()
+            # Mostrar mensaje de error si las fechas no coinciden o el estado no es 'P' o 'F'
+            messagebox.showerror("ERROR -01", "La cuota no puede ser revertida. Verifique la fecha y el estado.")
+    except Exception as err:
+        # Mostrar ventana de error si hay un error en la ejecución del código
+        messagebox.showerror("Error", str(err))
 
 def subconsultar3():
     resp = validarInputs(str(entry_idclic.get()))
     if resp == 1:
         idTrama = parseTramas(str(entry_idclic.get()))
         response = enviar_mensaje('C' + ',' + str(idTrama))
-        # print(response)
         try:
-            pagos = eval(response)  # Convierte la cadena de texto a una lista de usuarios
+            pagos = eval(response)  # Convierte la cadena de texto a una lista de pagos
             tabla3.delete(*tabla3.get_children())  # Limpia la tabla antes de agregar nuevos datos
             for pay in pagos:
                 if "datetime" in pay:
@@ -334,9 +333,9 @@ def subconsultar3():
                 else:
                     tabla3.insert('', 'end', values=pay)
         except Exception as e:
-            print("CLI-" + str(e))
+            print("Error durante la consulta: " + str(e))
     else:
-        messagebox.showerror("⚠️Alerta", "ID no valido")
+        messagebox.showerror("Alerta", "ID no válido")
 
 
 ### ZONA DE PAGO
