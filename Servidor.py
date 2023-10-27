@@ -11,11 +11,11 @@ from watchdog.events import FileSystemEventHandler
 mydb = mysql.connector
 try:
     mydb = mysql.connector.connect(
-        host="localhost",
-        #port=3308,
-        user="root",
-        password="",
-        database="pago_en_linea")
+        host="sql9.freesqldatabase.com",
+        port=3306,
+        user="sql9656990",
+        password="rBFgbBFTRd",
+        database="sql9656990")
 except mysql.connector.Error as err:
     print("DB-" + str(err))
     mydb.close()

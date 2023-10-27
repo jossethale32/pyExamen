@@ -11,7 +11,6 @@
   <component name="ChangeListManager">
     <list default="true" id="f455011a-7c19-4f4f-bb3d-efe5e9ffa5ba" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CliPagos.py" beforeDir="false" afterPath="$PROJECT_DIR$/CliPagos.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Servidor.py" beforeDir="false" afterPath="$PROJECT_DIR$/Servidor.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -113,7 +112,7 @@
       <workItem from="1698357364989" duration="2721000" />
       <workItem from="1698372246736" duration="203000" />
       <workItem from="1698372458593" duration="13000" />
-      <workItem from="1698423643515" duration="10766000" />
+      <workItem from="1698423643515" duration="11195000" />
     </task>
     <servers />
   </component>
@@ -121,7 +120,7 @@
     <option name="version" value="3" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/pyExamen$Servidor.coverage" NAME="Servidor Coverage Results" MODIFIED="1698435449110" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/pyExamen$CliPagos.coverage" NAME="CliPagos Coverage Results" MODIFIED="1698435541350" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/pyExamen$Servidor.coverage" NAME="Servidor Coverage Results" MODIFIED="1698435859698" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/pyExamen$CliPagos.coverage" NAME="CliPagos Coverage Results" MODIFIED="1698435862617" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
