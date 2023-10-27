@@ -4,7 +4,7 @@ import socket
 import requests
 import datetime
 import mysql.connector
-
+from datetime import datetime as tt
 
 
 # Función para enviar mensajes al servidor
@@ -178,9 +178,11 @@ def subconsultar():
 def reversion():
     # Crear una ventana secundaria.
     # ventana_secundaria = tk.Toplevel()
+    ventana_tercearia.iconbitmap("ic_icon.ico")
     ventana_tercearia.deiconify()
     ventana_tercearia.title("Reversion")
     ventana_tercearia.config(width=1000, height=600)
+    ventana_tercearia.protocol("WM_DELETE_WINDOW", disable_event)
     # Crear un botón dentro de la ventana secundaria
     # para cerrar la misma.
 
@@ -226,6 +228,8 @@ def reversion():
     tabla3.heading("PAGOFECHAREALIZACION", text="PAGOFECHAREALIZACION")
     tabla3.heading("ESTADO", text="ESTADO")
     tabla3.heading("REFERENCIA", text="REFERENCIA")
+    tabla3.heading("MONTO_ANTERIOR", text="MONTO_ANTERIOR")
+    tabla3.column("MONTO_ANTERIOR", stretch="no", minwidth=0, width=0)
 
     tabla3.grid(row=2, column=0, columnspan=4, padx=10, pady=10)
 
@@ -259,6 +263,9 @@ def parseTramas(entrada):
 
 def reversion3():
     try:
+        now = tt.now().date()
+        now.strftime("%Y-%m-%d")
+        now = str(now)
         # Obtener la fila seleccionada de la tabla
         selected_item = tabla3.selection()[0]  # Retorna el ID de la fila seleccionada
 
@@ -266,12 +273,14 @@ def reversion3():
         id_cliente = tabla3.item(selected_item, 'values')[0]
         cuota = tabla3.item(selected_item, 'values')[1]
         estado = tabla3.item(selected_item, 'values')[5]  # Obtener el valor de la columna ESTADO
-        referencia = tabla3.item(selected_item, 'values')[4]  # Obtener el valor de la columna REFERENCIAS
-        monto_anterior = tabla3.item(selected_item, 'values')[2]  # Obtener el valor de la columna MONTO_ANTERIOR
+        pagadofecha = tabla3.item(selected_item, 'values')[4]  # Obtener el valor de la columna REFERENCIAS
+        referencia = tabla3.item(selected_item, 'values')[6]  # Obtener el valor de la columna REFERENCIAS
+        monto_anterior = tabla3.item(selected_item, 'values')[7]  # Obtener el valor de la columna MONTO_ANTERIOR
 
         # Conectar a la base de datos
         mydb = mysql.connector.connect(
             host="localhost",
+            port=3308,
             user="root",
             password="",
             database="pago_en_linea"
@@ -282,18 +291,21 @@ def reversion3():
         # Verificar si la columna REFERENCIAS tiene datos y el ESTADO es 'P'
         if referencia and estado == 'P':
             # Realizar la reversión en la base de datos
-            cursor.execute(
-                "UPDATE pagos SET `ESTADO` = 'A', `REFERENCIA` = NULL, `PAGOFECHAREALIZACION` = NULL, `MONTO` = %s WHERE `ID CLIENTE` = %s AND `CUOTA` = %s",
-                (monto_anterior, id_cliente, cuota))
-            mydb.commit()
+            if now ==str(pagadofecha):
+                cursor.execute(
+                    "UPDATE pagos SET `ESTADO` = 'A', `REFERENCIA` = NULL, `PAGOFECHAREALIZACION` = NULL, `MONTO` = %s WHERE `ID CLIENTE` = %s AND `CUOTA` = %s",
+                    (monto_anterior, id_cliente, cuota))
+                mydb.commit()
 
-            # Mostrar ventana de éxito
-            messagebox.showinfo("00 Exitoso", "Reversión exitosa")
+                # Mostrar ventana de éxito
+                messagebox.showinfo("00 Exitoso", "Reversión exitosa")
 
-            # Actualizar la tabla para mostrar el valor de MONTO_ANTERIOR en la columna MONTO
-            tabla3.item(selected_item, values=(id_cliente, cuota, monto_anterior, referencia, "", "A", "Revertido"))
+                # Actualizar la tabla para mostrar el valor de MONTO_ANTERIOR en la columna MONTO
+                tabla3.item(selected_item, values=(id_cliente, cuota, monto_anterior, referencia, "", "A", "Revertido"))
 
-            ventana_tercearia.update_idletasks()
+                ventana_tercearia.update_idletasks()
+            else:
+                messagebox.showwarning("Alerta", "Esta Cuota no puede ser Revertida! Fechas no Coinciden!")
         else:
             # Mostrar mensaje si la columna REFERENCIAS está vacía o el ESTADO no es 'P'
             messagebox.showwarning("Alerta", "La columna REFERENCIAS está vacía o el ESTADO no es 'P'. No se puede revertir la cuota.")
@@ -447,16 +459,13 @@ ventana_secundariaP2.withdraw()
 entry_pago2 = tk.Entry(ventana_secundariaP2)
 
 tabla = ttk.Treeview(ventana_secundaria,
-                     columns=("ID CLIENTE", "CUOTA", "MONTO", "FECHA PAGO", "PAGOFECHAREALIZACION", "ESTADO"),
-                     show="headings")
+columns=("ID CLIENTE", "CUOTA", "MONTO", "FECHA PAGO", "PAGOFECHAREALIZACION", "ESTADO"),show="headings")
 
 ventana_tercearia = tk.Toplevel()
 ventana_tercearia.withdraw()
 entry_idclic = tk.Entry(ventana_tercearia)
 
 tabla3 = ttk.Treeview(ventana_tercearia,
-                      columns=("ID CLIENTE", "CUOTA", "MONTO", "FECHA PAGO", "PAGOFECHAREALIZACION", "ESTADO",
-                               "REFERENCIA"),
-                      show="headings")
+columns=("ID CLIENTE", "CUOTA", "MONTO", "FECHA PAGO", "PAGOFECHAREALIZACION", "ESTADO","REFERENCIA","MONTO_ANTERIOR"),show="headings")
 
 root.mainloop()

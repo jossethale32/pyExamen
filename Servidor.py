@@ -10,7 +10,7 @@ mydb = mysql.connector
 try:
     mydb = mysql.connector.connect(
         host="localhost",
-        # port=3308,
+        port=3308,
         user="root",
         password="",
         database="pago_en_linea")
@@ -49,7 +49,7 @@ def handle_client(client_socket, addr):
                 client_socket.send(str(spagos).encode('utf-8'))
                 # print(str(id) + '\n'+str(cuota)+'\n'+str(fecha)+'\n'+str(monto))
             elif data.startswith('R'):
-                print("Reversion")
+                # print("Reversion")
                 _, id_cliente, _, _, _, = data.split(',')
                 _, _, cuota, _, _, = data.split(',')
                 revert = reversion3(id_cliente, cuota)
@@ -85,6 +85,7 @@ def reversion3(id_cliente, cuota):
         # Establecer la conexión a la base de datos
         mydb = mysql.connector.connect(
             host="localhost",
+            port=3308,
             user="root",
             password="",
             database="pago_en_linea"
