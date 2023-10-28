@@ -4,8 +4,32 @@ import socket
 import requests
 import datetime
 import mysql.connector
+import ipaddress
+import sys
 from datetime import datetime as tt
 
+#Opcion de seervidor remoto o no esta en local
+def validate_ip_address(ip_string):
+   try:
+       ip_object = ipaddress.ip_address(ip_string)
+       return 1
+   except ValueError:
+       return 0
+
+# verificar o validaar que en el argumento ingreso una address correcta
+args = len(sys.argv) - 1
+if args==1:
+    resp= validate_ip_address(str(sys.argv[0]))
+    if resp==1:
+        addr=str(sys.argv[1])
+    else:
+        print("Error-Direccion no valida para el servidor")
+        quit()
+
+elif args==2:
+    port=int(sys.argv[2])
+else:
+    addr='127.0.0.1'
 
 # Función para enviar mensajes al servidor
 def enviar_mensaje(mensaje):
@@ -18,12 +42,15 @@ def enviar_mensaje(mensaje):
         client_socket.close()
     except TimeoutError as e:
         messagebox.showerror("⚠️Error", "Servidor no Responde")
-        client_socket.close()
+        # client_socket.close()
         response = ""
     except socket.timeout as ee:
         messagebox.showerror("⚠️Error", "Error de parte del servidor")
-        client_socket.close()
+        # client_socket.close()
         response = ""
+    except socket.error as e:
+        messagebox.showerror("⚠️Error", "Verifica la Disponiblidad del servidor")
+        quit()
     return response
 
 
@@ -35,10 +62,15 @@ def enviar_mensajeTest(mensaje):
         client_socket.close()
     except TimeoutError as e:
         messagebox.showerror("⚠️Error", "Servidor no Responde")
-        client_socket.close()
+        # client_socket.close()
     except socket.timeout as ee:
         messagebox.showerror("⚠️Error", "Error de parte del servidor")
-        client_socket.close()
+        # client_socket.close()
+    except socket.error as e:
+        messagebox.showerror("⚠️Error", "Verifica la Disponiblidad del servidor")
+        quit()
+        # client_socket.close()
+        # print(e)
 
 
 def detect_public_ip():

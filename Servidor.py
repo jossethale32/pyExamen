@@ -3,9 +3,29 @@ import mysql.connector
 import threading
 import requests
 import random
+import sys
+import ipaddress
 from datetime import datetime
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
+
+#Opcion de seervidor remoto o no esta en local
+def validate_ip_address(ip_string):
+   try:
+       ip_object = ipaddress.ip_address(ip_string)
+       return 1
+   except ValueError:
+       return 0
+
+# verificar o validaar que en el argumento ingreso una address correcta
+args = len(sys.argv) - 1
+if args>0:
+    resp= validate_ip_address(str(sys.argv[1]))
+    if resp==1:
+        addr=str(sys.argv[1])
+    else:
+        print("Error-Direccion no valida para el servidor")
+        quit()
+else:
+    addr='127.0.0.1'
 
 # Configura la conexión a la base de datos\
 mydb = mysql.connector
@@ -24,9 +44,16 @@ except Exception as g:
     mydb.close()
 
 # Configura el servidor de sockets
+# addr='127.0.0.1'
+port=12345
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.bind(('localhost', 12345))
-server_socket.listen(5)
+try:
+    server_socket.bind((addr, port))
+    server_socket.listen(5)
+except socket.error as tt:
+    print("Error-Ya Existe un Servidor corriendo sobre este puerto ("+str(port)+")")
+    server_socket.close()
+    quit()
 
 
 
@@ -34,32 +61,28 @@ server_socket.listen(5)
 def handle_client(client_socket, addr):
     while True:
         try:
-            data = client_socket.recv(1024).decode('utf-8')
+            data = client_socket.recv(1024).decode('utf-8')     #DATA OBTENIDA DEL CLIENTE
             if not data:
                 break
-            if data.startswith('C'):
-                # print("Consultar")
+            if data.startswith('C'):                            #CONSULTAR
                 _, id = data.split(',')
                 pagos = getPagos(id)
                 client_socket.send(str(pagos).encode('utf-8'))
-            elif data.startswith('P'):
-                # print("Pagos")
+            elif data.startswith('P'):                          #PAGAR
                 _, id, _, _, _, = data.split(',')
                 _, _, cuota, _, _, = data.split(',')
                 _, _, _, fecha, _, = data.split(',')
                 _, _, _, _, monto = data.split(',')
                 spagos = setPagos(id, cuota, fecha, monto)
                 client_socket.send(str(spagos).encode('utf-8'))
-                # print(str(id) + '\n'+str(cuota)+'\n'+str(fecha)+'\n'+str(monto))
-            elif data.startswith('R'):
+            elif data.startswith('R'):                          #REVERTIR
                 _, id, cuota,monto_anterior = data.split(',')
                 resultado_reversion = revertir_cuota(id, cuota,monto_anterior)
                 client_socket.send(str(resultado_reversion).encode('utf-8'))
-
-            elif data.startswith('E'):
+            elif data.startswith('E'):                          #SALIR
                 print("Salir")
                 break
-            else:
+            else:                                               #PRIMERA CONEXION DE CLIENTE
                 print("Nuevo Cliente IP: " + str(data))
         except socket.timeout as erroT:
             print(erroT)
@@ -70,6 +93,7 @@ def handle_client(client_socket, addr):
     client_socket.close()
 
 
+#Funcion para obtener los pagos
 def getPagos(id):
     try:
         cursor = mydb.cursor()
@@ -80,23 +104,24 @@ def getPagos(id):
         print("⚠️No se pudo actualizar la lista de Pagos")
 
 
+# METODO para reveertir una cuota espesifica
 def revertir_cuota(id, cuota, monto_anterior):
     try:
         # Conectar a la base de datos
         cursor = mydb.cursor()
-
         # Realizar la reversión en la base de datos y establecer MONTO como monto_anterior
         cursor.execute(
             "UPDATE pagos SET `ESTADO` = 'A', `REFERENCIA` = NULL, `PAGOFECHAREALIZACION` = NULL, `MONTO` = %s WHERE `ID CLIENTE` = %s AND `CUOTA` = %s",
             (monto_anterior, id, cuota))
         mydb.commit()
-
         return "00"  # Código para reversión exitosa
     except mysql.connector.Error as err:
         print("Error en la base de datos: ", err)
         return "01"  # Código para error en la base de datos
 
+#METODO PARA HACER PAGOS
 def setPagos(id, cuota, fecha, monto):
+    # Parse DE FECHA a formato de mysql YEAR-MONTH-DAY
     now = datetime.now().date()
     now.strftime("%Y-%m-%d")
     now = str(now)
@@ -132,7 +157,7 @@ def setPagos(id, cuota, fecha, monto):
             # Estoy pagando de mas no puedo!
             return "No se puede pagar de mas!"
         elif diferencia == 0:
-            # Puede pagar porque esta dando lo que le falta
+            # Puede pagar porque, esta dando lo que le falta
             cursor = mydb.cursor()
             try:
                 refer = str("RFM-") + str(random.randint(1, 857567567))
@@ -208,6 +233,7 @@ def setPagos(id, cuota, fecha, monto):
             return "No se puede pagar mas!"
         elif diferencia == 0:
             # Puede pagar porque esta dando lo que le falta
+            refer = str("RFM-") + str(random.randint(1, 857567567))
             cursor = mydb.cursor()
             try:
                 sql = "UPDATE pagos set MONTO = %s,`PAGOFECHAREALIZACION` = %s, ESTADO='P', REFERENCIA = %s where `ID CLIENTE` = %s AND CUOTA = %s AND `FECHA PAGO` like %s"
@@ -239,6 +265,7 @@ def setPagos(id, cuota, fecha, monto):
                 sql = "UPDATE pagos set MONTO = %s,`PAGOFECHAREALIZACION` = %s, ESTADO='F' where `ID CLIENTE` = %s AND CUOTA = %s AND `FECHA PAGO` like %s"
 
                 val = (str(diferencia), now, id, cuota, fecha)
+                cursor.execute(sql, val)
                 mydb.commit()
                 return "00"
             except mysql.connector.Error as e:
@@ -259,7 +286,7 @@ def setPagos(id, cuota, fecha, monto):
                 return "01"
 
 
-# Función para iniciar el servidor de sockets
+# Metodo para iniciar el servidor de sockets
 def start_server():
     print("Servidor Iniciado...\nEsperando Conexion...")
 
