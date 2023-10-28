@@ -136,6 +136,8 @@ def setPagos(id, cuota, fecha, monto):
     except mysql.connector.Error as e:
         # print("⚠️No se pudo verificar el estado de esa cuota")
         return "Algo Fallo del lado del server! " + str(e)
+    except Exception as e:
+        return "Algo Fallo del lado del server! " + str(e)
 
     # Si el estado esta activo para pagar
     if state[0] == "A":
